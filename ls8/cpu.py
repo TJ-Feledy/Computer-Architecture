@@ -17,26 +17,47 @@ class CPU:
     def ram_write(self, MAR, MDR):
         self.ram[MAR] = MDR
 
-    def load(self):
+    def load(self, program):
         """Load a program into memory."""
-
         address = 0
+
+        if len(program) != 2:
+            print('need proper file name passed')
+            sys.exit(1)
+
+        filename = program[1]
+
+        with open(filename) as f:
+            for line in f:
+                # print(line)
+                if line == '\n':
+                    continue
+                if line[0] == '#':
+                    continue
+                
+                comment_split = line.split('#')  # everything before (#) and everything after
+
+                num = comment_split[0].strip()  # save everything before (#) to num variable
+
+                self.ram[address] = int(num,2)
+                # print(int(num,2))
+                address += 1
 
         # For now, we've just hardcoded a program:
 
-        program = [
-            # From print8.ls8
-            0b10000010, # LDI R0,8
-            0b00000000,
-            0b00001000,
-            0b01000111, # PRN R0
-            0b00000000,
-            0b00000001, # HLT
-        ]
+        # program = [
+        #     # From print8.ls8
+        #     0b10000010, # LDI R0,8
+        #     0b00000000,
+        #     0b00001000,
+        #     0b01000111, # PRN R0
+        #     0b00000000,
+        #     0b00000001, # HLT
+        # ]
 
-        for instruction in program:
-            self.ram[address] = instruction
-            address += 1
+        # for instruction in program:
+        #     self.ram[address] = instruction
+        #     address += 1
 
 
     def alu(self, op, reg_a, reg_b):
@@ -73,14 +94,15 @@ class CPU:
         running = True
 
         while running:
+            # break
 
             IR = self.ram_read(self.pc)    # Instruction Register
             operand_a = self.ram_read(self.pc+1)
             operand_b = self.ram_read(self.pc+2)
 
-            LDI = 0b10000010    # Load Instruction
-            PRN = 0b01000111    # Print Instruction
-            HLT = 0b00000001    # Halt
+            LDI = 130    # Load Instruction
+            PRN = 71    # Print Instruction
+            HLT = 1    # Halt
             
             if IR == HLT:
                 running = False   # Stop the loop/end program
