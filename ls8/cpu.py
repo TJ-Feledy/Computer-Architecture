@@ -119,7 +119,7 @@ class CPU:
             operand_a = self.ram_read(self.pc+1)
             operand_b = self.ram_read(self.pc+2)
 
-            if IR in self.branchtable:
+            if IR in self.branchtable:    # If the instruction is in branchtable, call the handler
                 self.branchtable[IR](operand_a, operand_b)
 
             else:
