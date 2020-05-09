@@ -21,8 +21,8 @@ class CPU:
         """Load a program into memory."""
         address = 0
 
-        if len(program) != 2:
-            print('need proper file name passed')
+        if len(program) != 2:   # check for second argument from command line
+            print('need proper filename passed')
             sys.exit(1)
 
         filename = program[1]
@@ -30,34 +30,18 @@ class CPU:
         with open(filename) as f:
             for line in f:
                 # print(line)
-                if line == '\n':
+                if line == '\n':    # skip empty lines
                     continue
-                if line[0] == '#':
+                if line[0] == '#':  # skip lines that are comments
                     continue
                 
                 comment_split = line.split('#')  # everything before (#) and everything after
 
-                num = comment_split[0].strip()  # save everything before (#) to num variable
+                num = comment_split[0].strip()   # save everything before (#) to num variable
 
-                self.ram[address] = int(num,2)
+                self.ram[address] = int(num,2)   # convert binary to int, and save to memory
                 # print(int(num,2))
                 address += 1
-
-        # For now, we've just hardcoded a program:
-
-        # program = [
-        #     # From print8.ls8
-        #     0b10000010, # LDI R0,8
-        #     0b00000000,
-        #     0b00001000,
-        #     0b01000111, # PRN R0
-        #     0b00000000,
-        #     0b00000001, # HLT
-        # ]
-
-        # for instruction in program:
-        #     self.ram[address] = instruction
-        #     address += 1
 
 
     def alu(self, op, reg_a, reg_b):
@@ -66,6 +50,8 @@ class CPU:
         if op == "ADD":
             self.reg[reg_a] += self.reg[reg_b]
         #elif op == "SUB": etc
+        elif op == 'MUL':
+            self.reg[reg_a] *= self.reg[reg_b]
         else:
             raise Exception("Unsupported ALU operation")
 
@@ -101,8 +87,9 @@ class CPU:
             operand_b = self.ram_read(self.pc+2)
 
             LDI = 130    # Load Instruction
-            PRN = 71    # Print Instruction
-            HLT = 1    # Halt
+            PRN = 71     # Print Instruction
+            MUL = 162    # Multiply Instruction
+            HLT = 1      # Halt
             
             if IR == HLT:
                 running = False   # Stop the loop/end program
@@ -110,6 +97,10 @@ class CPU:
 
             elif IR == LDI:
                 self.reg[operand_a] = operand_b    # Save the value at given address
+                self.pc += 3
+
+            elif IR == MUL:
+                self.alu('MUL', operand_a, operand_b)
                 self.pc += 3
 
             elif IR == PRN:
