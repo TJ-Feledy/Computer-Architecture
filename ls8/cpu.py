@@ -10,6 +10,9 @@ class CPU:
         self.ram = [0] * 256
         self.reg = [0] * 8
         self.pc = 0
+        self.branchtable = {}
+        self.running = False
+
 
     def ram_read(self, MAR):
         return self.ram[MAR]
@@ -30,7 +33,7 @@ class CPU:
         with open(filename) as f:
             for line in f:
                 # print(line)
-                if line == '\n':    # skip empty lines
+                if line == '\n' or line == '':    # skip empty lines
                     continue
                 if line[0] == '#':  # skip lines that are comments
                     continue
@@ -75,39 +78,49 @@ class CPU:
 
         print()
 
+
+
+    def handle_LDI(self, op_a, op_b):
+        self.reg[op_a] = op_b    # Save the value at given address
+        self.pc += 3
+
+    def handle_PRN(self, op_a, op_b):
+        value = self.reg[op_a]
+        print(value)   # Print from given address
+        self.pc += 2
+
+    def handle_MUL(self, op_a, op_b):
+        self.alu('MUL', op_a, op_b)
+        self.pc += 3
+
+    def handle_HLT(self, op_a, op_b):
+        self.running = False   # Stop the loop/end program
+        self.pc += 1
+
+
     def run(self):
         """Run the CPU."""
-        running = True
+        self.running = True
 
-        while running:
+        LDI = 130    # Load Instruction
+        PRN = 71     # Print Instruction
+        MUL = 162    # Multiply Instruction
+        HLT = 1      # Halt
+
+        self.branchtable[LDI] = self.handle_LDI
+        self.branchtable[PRN] = self.handle_PRN
+        self.branchtable[MUL] = self.handle_MUL
+        self.branchtable[HLT] = self.handle_HLT
+
+        while self.running:
             # break
 
             IR = self.ram_read(self.pc)    # Instruction Register
             operand_a = self.ram_read(self.pc+1)
             operand_b = self.ram_read(self.pc+2)
 
-            LDI = 130    # Load Instruction
-            PRN = 71     # Print Instruction
-            MUL = 162    # Multiply Instruction
-            HLT = 1      # Halt
-            
-            if IR == HLT:
-                running = False   # Stop the loop/end program
-                self.pc += 1
-
-            elif IR == LDI:
-                self.reg[operand_a] = operand_b    # Save the value at given address
-                self.pc += 3
-
-            elif IR == MUL:
-                self.alu('MUL', operand_a, operand_b)
-                self.pc += 3
-
-            elif IR == PRN:
-                value = self.reg[operand_a]
-                print(value)   # Print from given address
-                self.pc += 2
-
+            if IR in self.branchtable:
+                self.branchtable[IR](operand_a, operand_b)
 
             else:
                 # if command is not recognizable
