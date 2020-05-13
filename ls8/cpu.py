@@ -9,9 +9,11 @@ class CPU:
         """Construct a new CPU."""
         self.ram = [0] * 256
         self.reg = [0] * 8
-        self.pc = 0
+        self.pc = 0     # Program counter for reading instructions
+        self.SP = 7     # register location for top of stack
         self.branchtable = {}
         self.running = False
+        self.reg[self.SP] = len(self.ram) - 1  # store top of stack in register 7
 
 
     def ram_read(self, MAR):
@@ -97,17 +99,32 @@ class CPU:
         self.running = False   # Stop the loop/end program
         self.pc += 1
 
+    def handle_PUSH(self, op_a, op_b):
+        self.reg[self.SP] -= 1                      # decrement the Stack Pointer
+        reg_value = self.reg[op_a]                  # Save the value of given register
+        self.ram[self.reg[self.SP]] = reg_value     # Add the given value to the stack
+        self.pc += 2
+
+    def handle_POP(self, op_a, op_b):
+        reg_value = self.ram[self.reg[self.SP]]     # POP value in stack at SP
+        self.reg[op_a] = reg_value                  # Store value in given register
+        self.reg[self.SP] += 1                      # increment the Stack Pointer
+        self.pc += 2
 
     def run(self):
         """Run the CPU."""
         self.running = True
 
-        LDI = 130    # Load Instruction
-        PRN = 71     # Print Instruction
-        MUL = 162    # Multiply Instruction
-        HLT = 1      # Halt
+        LDI =  130    # Load Instruction
+        PUSH = 69     # PUSH to stack
+        POP =  70     # POP off stack
+        PRN =  71     # Print Instruction
+        MUL =  162    # Multiply Instruction
+        HLT =  1      # Halt
 
         self.branchtable[LDI] = self.handle_LDI
+        self.branchtable[PUSH] = self.handle_PUSH
+        self.branchtable[POP] = self.handle_POP
         self.branchtable[PRN] = self.handle_PRN
         self.branchtable[MUL] = self.handle_MUL
         self.branchtable[HLT] = self.handle_HLT
